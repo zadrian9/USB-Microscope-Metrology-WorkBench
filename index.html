@@ -1,0 +1,1058 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>USB Microscope Metrology & Inspection Studio</title>
+  <style>
+    :root {
+      --bg-dark: #121417;
+      --bg-panel: #1b1e23;
+      --bg-card: #252a30;
+      --primary: #00adb5;
+      --primary-hover: #00fff5;
+      --accent-red: #ff4b4b;
+      --accent-yellow: #ffb800;
+      --accent-green: #00e676;
+      --text-main: #eeeeee;
+      --text-muted: #9aa0a6;
+      --border: #323842;
+    }
+
+    * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Segoe UI', system-ui, -apple-system, sans-serif; }
+
+    body {
+      background-color: var(--bg-dark);
+      color: var(--text-main);
+      height: 100vh;
+      display: flex;
+      flex-direction: column;
+      overflow: hidden;
+    }
+
+    header {
+      background-color: var(--bg-panel);
+      border-bottom: 1px solid var(--border);
+      padding: 8px 16px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+      z-index: 10;
+    }
+
+    .title-area h1 { font-size: 1.1rem; font-weight: 600; color: var(--primary-hover); }
+
+    .header-controls { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
+
+    button, select, input {
+      background-color: var(--bg-card);
+      color: var(--text-main);
+      border: 1px solid var(--border);
+      padding: 6px 12px;
+      border-radius: 4px;
+      font-size: 0.85rem;
+      cursor: pointer;
+      transition: all 0.15s ease;
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+    }
+
+    button:hover { background-color: var(--border); border-color: var(--primary); }
+    button.active { background-color: var(--primary); color: #000; font-weight: 600; border-color: var(--primary-hover); }
+    button.danger { border-color: var(--accent-red); color: var(--accent-red); }
+    button.danger:hover { background-color: var(--accent-red); color: #fff; }
+
+    .app-body {
+      display: flex;
+      flex: 1;
+      overflow: hidden;
+      position: relative;
+    }
+
+    .sidebar {
+      width: 320px;
+      background-color: var(--bg-panel);
+      border-right: 1px solid var(--border);
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+      padding: 12px;
+      overflow-y: auto;
+      z-index: 5;
+    }
+
+    .panel-section {
+      background-color: var(--bg-dark);
+      border: 1px solid var(--border);
+      border-radius: 6px;
+      padding: 10px;
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+    }
+
+    .panel-section h3 {
+      font-size: 0.8rem;
+      text-transform: uppercase;
+      letter-spacing: 0.8px;
+      color: var(--primary);
+    }
+
+    .tool-grid {
+      display: grid;
+      grid-template-columns: repeat(2, 1fr);
+      gap: 6px;
+    }
+
+    .control-row {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      font-size: 0.82rem;
+      gap: 8px;
+    }
+
+    .control-row label { color: var(--text-muted); flex: 1; }
+    .control-row input[type="range"] { flex: 1.5; accent-color: var(--primary); }
+
+    .viewport-container {
+      flex: 1;
+      position: relative;
+      background-color: #000;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      overflow: hidden;
+    }
+
+    #mainCanvas {
+      position: absolute;
+      cursor: crosshair;
+      object-fit: contain;
+      width: 100%;
+      height: 100%;
+    }
+
+    .banner-paused {
+      position: absolute;
+      top: 12px;
+      left: 50%;
+      transform: translateX(-50%);
+      background-color: rgba(255, 75, 75, 0.9);
+      color: #fff;
+      padding: 4px 16px;
+      border-radius: 20px;
+      font-weight: 600;
+      font-size: 0.85rem;
+      pointer-events: none;
+      display: none;
+      box-shadow: 0 4px 12px rgba(0,0,0,0.5);
+      z-index: 9;
+    }
+
+    .intensity-drawer {
+      position: absolute;
+      bottom: 0; left: 0; right: 0;
+      height: 180px;
+      background-color: rgba(18, 20, 23, 0.95);
+      border-top: 1px solid var(--border);
+      display: flex;
+      flex-direction: column;
+      padding: 8px 12px;
+      z-index: 8;
+      transition: transform 0.2s ease;
+    }
+
+    .intensity-drawer.collapsed { transform: translateY(140px); }
+
+    .intensity-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      font-size: 0.8rem;
+      color: var(--primary);
+      margin-bottom: 4px;
+      cursor: pointer;
+    }
+
+    #intensityCanvas {
+      width: 100%;
+      height: 120px;
+      background-color: #0a0b0d;
+      border: 1px solid var(--border);
+      border-radius: 4px;
+    }
+
+    .gallery-container {
+      display: grid;
+      grid-template-columns: repeat(2, 1fr);
+      gap: 6px;
+      max-height: 140px;
+      overflow-y: auto;
+    }
+
+    .gallery-item {
+      border: 1px solid var(--border);
+      border-radius: 4px;
+      overflow: hidden;
+      aspect-ratio: 4/3;
+      cursor: pointer;
+    }
+
+    .gallery-item img { width: 100%; height: 100%; object-fit: cover; }
+
+    /* Modal Styling */
+    .modal-overlay {
+      position: fixed;
+      top: 0; left: 0; right: 0; bottom: 0;
+      background: rgba(0,0,0,0.7);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      z-index: 100;
+      display: none;
+    }
+
+    .modal {
+      background: var(--bg-panel);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      padding: 16px;
+      width: 320px;
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+    }
+
+    video { display: none; }
+  </style>
+</head>
+<body>
+
+  <header>
+    <div class="title-area">
+      <h1>Metrology Workbench</h1>
+    </div>
+    <div class="header-controls">
+      <select id="cameraSelect"><option>Select Camera...</option></select>
+      <select id="resSelect">
+        <option value="1920x1080" selected>1080p (FHD)</option>
+        <option value="1280x720">720p (HD)</option>
+        <option value="3840x2160">4K (UHD)</option>
+        <option value="max">Max Hardware Res</option>
+      </select>
+      <button id="btnStartCam" class="active">Start Feed</button>
+      <button id="btnPause">Freeze Frame</button>
+      <button id="btnSnap">Snapshot</button>
+      <button id="btnExportCSV">Export CSV</button>
+    </div>
+  </header>
+
+  <div class="app-body">
+    <div class="sidebar">
+      
+      <!-- Calibration -->
+      <div class="panel-section">
+        <h3>Calibration</h3>
+        <button id="btnCalibrate" style="width:100%;">2-Click Calibrate</button>
+        <div class="control-row">
+          <label>Scale Factor:</label>
+          <span id="scaleDisplay" style="font-family:monospace; color:var(--primary-hover);">100.00 px/mm</span>
+        </div>
+        <div class="control-row">
+          <label>Display Units:</label>
+          <select id="unitSelect">
+            <option value="mm">mm</option>
+            <option value="um">µm</option>
+            <option value="mil">mil</option>
+            <option value="in">in</option>
+            <option value="px">px</option>
+          </select>
+        </div>
+      </div>
+
+      <!-- Tools -->
+      <div class="panel-section">
+        <h3>Measurement Tools</h3>
+        <div class="tool-grid">
+          <button class="tool-btn active" data-tool="select">Select / Edit</button>
+          <button class="tool-btn" data-tool="line">Line / Dist</button>
+          <button class="tool-btn" data-tool="circle">Circle (R/D)</button>
+          <button class="tool-btn" data-tool="arc3">3-Pt Arc</button>
+          <button class="tool-btn" data-tool="angle3">3-Pt Angle</button>
+          <button class="tool-btn" data-tool="polyline">Polyline</button>
+          <button class="tool-btn" data-tool="polygon">Polygon (Area)</button>
+          <button class="tool-btn" data-tool="profile">Profile Line</button>
+          <button class="tool-btn" data-tool="defect">Tag Defect</button>
+        </div>
+        <button id="btnDeleteSelected" class="danger" style="margin-top:6px;">Delete Selected</button>
+      </div>
+
+      <!-- Processing Filters -->
+      <div class="panel-section">
+        <h3>Image Processing</h3>
+        <div class="control-row">
+          <label>Filter Mode:</label>
+          <select id="filterSelect">
+            <option value="none">None</option>
+            <option value="sobel">Sobel Edges</option>
+            <option value="prewitt">Prewitt Edges</option>
+            <option value="laplacian">Laplacian Edge</option>
+            <option value="sharpen">Unsharp Filter</option>
+          </select>
+        </div>
+        <div class="control-row">
+          <label>Brightness:</label>
+          <input type="range" id="rngBrightness" min="-100" max="100" value="0">
+        </div>
+        <div class="control-row">
+          <label>Contrast:</label>
+          <input type="range" id="rngContrast" min="-100" max="100" value="0">
+        </div>
+      </div>
+
+      <!-- Overlays -->
+      <div class="panel-section">
+        <h3>Reticles & Overlays</h3>
+        <div class="control-row">
+          <label>Crosshair Center:</label>
+          <input type="checkbox" id="chkCrosshair">
+        </div>
+        <div class="control-row">
+          <label>Calibrated Grid:</label>
+          <input type="checkbox" id="chkGrid">
+        </div>
+      </div>
+
+      <!-- Session Gallery -->
+      <div class="panel-section">
+        <h3>Session Gallery</h3>
+        <div class="gallery-container" id="galleryDrawer"></div>
+      </div>
+
+    </div>
+
+    <div class="viewport-container" id="viewportContainer">
+      <div class="banner-paused" id="bannerPaused">FRAME PAUSED</div>
+      <canvas id="mainCanvas"></canvas>
+      <video id="webcam" autoplay playsinline></video>
+
+      <!-- Intensity Profile Bottom Drawer -->
+      <div class="intensity-drawer collapsed" id="intensityDrawer">
+        <div class="intensity-header" id="intensityHeader">
+          <span>LINE INTENSITY PROFILE GRAPH (0 - 255 LUMINANCE)</span>
+          <span id="drawerToggleIcon">▲ Click to Expand</span>
+        </div>
+        <canvas id="intensityCanvas"></canvas>
+      </div>
+    </div>
+  </div>
+
+  <!-- Modal for Defect Tag Input -->
+  <div class="modal-overlay" id="defectModal">
+    <div class="modal">
+      <h3>Tag Feature / Defect</h3>
+      <div class="control-row">
+        <label>Category:</label>
+        <select id="defectCat">
+          <option value="Burr">Burr</option>
+          <option value="Micro-Crack">Micro-Crack</option>
+          <option value="HAZ / Thermal">HAZ / Thermal Zone</option>
+          <option value="Pitting">Pitting / Pit</option>
+          <option value="Chipping">Tool Chipping</option>
+          <option value="Tool Wear">Tool Wear</option>
+        </select>
+      </div>
+      <div class="control-row">
+        <label>Severity:</label>
+        <select id="defectSeverity">
+          <option value="Minor">Minor</option>
+          <option value="Moderate">Moderate</option>
+          <option value="Critical">Critical</option>
+        </select>
+      </div>
+      <div class="control-row">
+        <label>Note:</label>
+        <input type="text" id="defectNote" placeholder="Optional notes...">
+      </div>
+      <div style="display:flex; gap:8px; justify-content:flex-end; margin-top:8px;">
+        <button id="btnCancelDefect">Cancel</button>
+        <button id="btnSaveDefect" class="active">Save Tag</button>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    const state = {
+      stream: null,
+      isPaused: false,
+      offscreenCanvas: document.createElement('canvas'),
+      scalePxPerMM: 100.0,
+      unit: 'mm',
+      activeTool: 'select',
+      shapes: [],
+      selectedShape: null,
+      dragTarget: null,
+      filter: 'none',
+      brightness: 0,
+      contrast: 0,
+      calibrationState: { active: false, step: 0, p1: null, p2: null },
+      pendingDefectPt: null,
+      creationShape: null
+    };
+
+    const video = document.getElementById('webcam');
+    const canvas = document.getElementById('mainCanvas');
+    const ctx = canvas.getContext('2d', { willReadFrequently: true });
+    const cameraSelect = document.getElementById('cameraSelect');
+    const resSelect = document.getElementById('resSelect');
+    const btnStartCam = document.getElementById('btnStartCam');
+    const btnPause = document.getElementById('btnPause');
+    const bannerPaused = document.getElementById('bannerPaused');
+    const scaleDisplay = document.getElementById('scaleDisplay');
+    const unitSelect = document.getElementById('unitSelect');
+    const filterSelect = document.getElementById('filterSelect');
+    const rngBrightness = document.getElementById('rngBrightness');
+    const rngContrast = document.getElementById('rngContrast');
+    const intensityDrawer = document.getElementById('intensityDrawer');
+    const intensityCanvas = document.getElementById('intensityCanvas');
+    const intensityCtx = intensityCanvas.getContext('2d');
+
+    async function initCameraDevices() {
+      try {
+        const devices = await navigator.mediaDevices.enumerateDevices();
+        const videoDevices = devices.filter(d => d.kind === 'videoinput');
+        cameraSelect.innerHTML = '';
+        videoDevices.forEach((dev, idx) => {
+          const opt = document.createElement('option');
+          opt.value = dev.deviceId;
+          opt.text = dev.label || `Camera ${idx + 1}`;
+          cameraSelect.appendChild(opt);
+        });
+      } catch (err) { console.error(err); }
+    }
+
+    async function startCamera() {
+      if (state.stream) state.stream.getTracks().forEach(t => t.stop());
+      
+      let videoConstraints = {
+        deviceId: cameraSelect.value ? { exact: cameraSelect.value } : undefined,
+        frameRate: { ideal: 30, max: 60 }
+      };
+
+      if (resSelect.value === 'max') {
+        videoConstraints.width = { ideal: 3840 };
+        videoConstraints.height = { ideal: 2160 };
+      } else {
+        const [w, h] = resSelect.value.split('x').map(Number);
+        videoConstraints.width = { ideal: w };
+        videoConstraints.height = { ideal: h };
+      }
+
+      try {
+        state.stream = await navigator.mediaDevices.getUserMedia({ video: videoConstraints });
+        video.srcObject = state.stream;
+        await video.play();
+        syncNativeCanvasResolution();
+      } catch (err) { alert('Camera start failed: ' + err.message); }
+    }
+
+    function syncNativeCanvasResolution() {
+      const nativeW = video.videoWidth || 1920;
+      const nativeH = video.videoHeight || 1080;
+
+      canvas.width = nativeW;
+      canvas.height = nativeH;
+      state.offscreenCanvas.width = nativeW;
+      state.offscreenCanvas.height = nativeH;
+
+      ctx.imageSmoothingEnabled = true;
+      ctx.imageSmoothingQuality = 'high';
+    }
+
+    video.addEventListener('loadedmetadata', () => {
+      syncNativeCanvasResolution();
+      requestAnimationFrame(renderLoop);
+    });
+
+    window.addEventListener('resize', syncNativeCanvasResolution);
+
+    function renderLoop() {
+      if (!state.isPaused && video.readyState >= video.HAVE_CURRENT_DATA) {
+        const offCtx = state.offscreenCanvas.getContext('2d');
+        offCtx.drawImage(video, 0, 0, canvas.width, canvas.height);
+      }
+
+      ctx.save();
+      ctx.filter = `brightness(${100 + Number(state.brightness)}%) contrast(${100 + Number(state.contrast)}%)`;
+      ctx.drawImage(state.offscreenCanvas, 0, 0, canvas.width, canvas.height);
+      ctx.restore();
+
+      if (state.filter !== 'none') applySpatialFilter();
+
+      if (document.getElementById('chkCrosshair').checked) drawCrosshair();
+      if (document.getElementById('chkGrid').checked) drawCalibratedGrid();
+
+      if (state.calibrationState.active && state.calibrationState.p1) {
+        ctx.strokeStyle = '#ff00ff';
+        ctx.lineWidth = Math.max(2, canvas.width / 800);
+        ctx.beginPath();
+        ctx.moveTo(state.calibrationState.p1.x, state.calibrationState.p1.y);
+        const end = state.calibrationState.p2 || state.calibrationState.p1;
+        ctx.lineTo(end.x, end.y);
+        ctx.stroke();
+      }
+
+      state.shapes.forEach(shape => drawShape(shape));
+      drawScaleBarLegend();
+
+      requestAnimationFrame(renderLoop);
+    }
+
+    function formatDistance(px) {
+      const mmVal = px / state.scalePxPerMM;
+      switch (state.unit) {
+        case 'mm': return `${mmVal.toFixed(3)} mm`;
+        case 'um': return `${(mmVal * 1000).toFixed(1)} µm`;
+        case 'mil': return `${(mmVal * 39.3701).toFixed(2)} mil`;
+        case 'in': return `${(mmVal / 25.4).toFixed(4)} in`;
+        default: return `${px.toFixed(1)} px`;
+      }
+    }
+
+    function formatArea(pxSq) {
+      const mm2 = pxSq / (state.scalePxPerMM * state.scalePxPerMM);
+      return `${mm2.toFixed(3)} mm²`;
+    }
+
+    function drawShape(shape) {
+      const isSel = (shape === state.selectedShape);
+      const baseScale = Math.max(1, canvas.width / 1280);
+      ctx.save();
+      ctx.strokeStyle = isSel ? '#00fff5' : shape.color || '#00adb5';
+      ctx.fillStyle = ctx.strokeStyle;
+      ctx.lineWidth = (isSel ? 3.0 : 2.0) * baseScale;
+
+      if (shape.type === 'line' || shape.type === 'profile') {
+        ctx.beginPath();
+        ctx.moveTo(shape.p1.x, shape.p1.y);
+        ctx.lineTo(shape.p2.x, shape.p2.y);
+        ctx.stroke();
+        const dist = Math.hypot(shape.p2.x - shape.p1.x, shape.p2.y - shape.p1.y);
+        drawLabel((shape.p1.x + shape.p2.x)/2, (shape.p1.y + shape.p2.y)/2, shape.type === 'profile' ? 'PROFILE' : formatDistance(dist));
+        if (shape.type === 'profile' && isSel) updateIntensityProfileGraph(shape);
+      } 
+      else if (shape.type === 'circle') {
+        ctx.beginPath();
+        ctx.arc(shape.center.x, shape.center.y, shape.r, 0, Math.PI * 2);
+        ctx.stroke();
+        drawLabel(shape.center.x, shape.center.y - shape.r - (8 * baseScale), `R:${formatDistance(shape.r)} | Ø:${formatDistance(2*shape.r)}`);
+      } 
+      else if (shape.type === 'arc3') {
+        [shape.p1, shape.p2, shape.p3].forEach(p => { if (p) { ctx.beginPath(); ctx.arc(p.x, p.y, 5 * baseScale, 0, Math.PI*2); ctx.fill(); } });
+        if (shape.p1 && shape.p2 && shape.p3) {
+          const circle = fitCircle3Pts(shape.p1, shape.p2, shape.p3);
+          if (circle) {
+            ctx.beginPath();
+            ctx.arc(circle.x, circle.y, circle.r, 0, Math.PI * 2);
+            ctx.setLineDash([6 * baseScale, 6 * baseScale]);
+            ctx.stroke();
+            ctx.setLineDash([]);
+            drawLabel(circle.x, circle.y, `Arc R:${formatDistance(circle.r)}`);
+          }
+        }
+      } 
+      else if (shape.type === 'angle3') {
+        const pts = [shape.p1, shape.p2, shape.p3].filter(Boolean);
+        if (pts.length > 1) {
+          ctx.beginPath();
+          ctx.moveTo(pts[0].x, pts[0].y);
+          for (let i=1; i<pts.length; i++) ctx.lineTo(pts[i].x, pts[i].y);
+          ctx.stroke();
+        }
+        if (shape.p1 && shape.p2 && shape.p3) {
+          const a1 = Math.atan2(shape.p1.y - shape.p2.y, shape.p1.x - shape.p2.x);
+          const a2 = Math.atan2(shape.p3.y - shape.p2.y, shape.p3.x - shape.p2.x);
+          let deg = Math.abs((a1 - a2) * (180 / Math.PI));
+          if (deg > 180) deg = 360 - deg;
+          drawLabel(shape.p2.x, shape.p2.y - (14 * baseScale), `${deg.toFixed(2)}°`);
+        }
+      }
+      else if (shape.type === 'polyline' || shape.type === 'polygon') {
+        if (shape.pts.length > 1) {
+          ctx.beginPath();
+          ctx.moveTo(shape.pts[0].x, shape.pts[0].y);
+          let totalLenPx = 0;
+          for (let i=1; i<shape.pts.length; i++) {
+            ctx.lineTo(shape.pts[i].x, shape.pts[i].y);
+            const segDist = Math.hypot(shape.pts[i].x - shape.pts[i-1].x, shape.pts[i].y - shape.pts[i-1].y);
+            totalLenPx += segDist;
+            if (shape.type === 'polyline') {
+              const mx = (shape.pts[i].x + shape.pts[i-1].x) / 2;
+              const my = (shape.pts[i].y + shape.pts[i-1].y) / 2;
+              drawLabel(mx, my, formatDistance(segDist));
+            }
+          }
+          if (shape.type === 'polygon') {
+            ctx.closePath();
+            const lastSeg = Math.hypot(shape.pts[0].x - shape.pts[shape.pts.length-1].x, shape.pts[0].y - shape.pts[shape.pts.length-1].y);
+            totalLenPx += lastSeg;
+          }
+          ctx.stroke();
+
+          if (shape.type === 'polyline') {
+            const lastPt = shape.pts[shape.pts.length - 1];
+            drawLabel(lastPt.x, lastPt.y - (16 * baseScale), `Total: ${formatDistance(totalLenPx)}`);
+          } else if (shape.type === 'polygon') {
+            const areaPx = calcPolygonArea(shape.pts);
+            const center = getPolygonCentroid(shape.pts);
+            drawLabel(center.x, center.y, `Area:${formatArea(areaPx)}`);
+          }
+        }
+      }
+      else if (shape.type === 'defect') {
+        ctx.fillStyle = shape.severity === 'Critical' ? '#ff4b4b' : (shape.severity === 'Moderate' ? '#ffb800' : '#00e676');
+        ctx.beginPath();
+        ctx.arc(shape.pt.x, shape.pt.y, 8 * baseScale, 0, Math.PI*2);
+        ctx.fill();
+        drawLabel(shape.pt.x + (16 * baseScale), shape.pt.y, `[${shape.category}] ${shape.note || ''}`);
+      }
+
+      if (isSel) {
+        getShapeHandles(shape).forEach(h => {
+          ctx.fillStyle = '#00fff5';
+          ctx.beginPath();
+          ctx.arc(h.x, h.y, 6 * baseScale, 0, Math.PI * 2);
+          ctx.fill();
+        });
+      }
+
+      ctx.restore();
+    }
+
+    function drawLabel(x, y, text) {
+      const baseScale = Math.max(1, canvas.width / 1280);
+      ctx.save();
+      const fontSize = Math.round(13 * baseScale);
+      ctx.font = `${fontSize}px system-ui`;
+      const metrics = ctx.measureText(text);
+      const padding = 6 * baseScale;
+      ctx.fillStyle = 'rgba(0,0,0,0.82)';
+      ctx.fillRect(x - metrics.width/2 - padding, y - fontSize, metrics.width + (padding * 2), fontSize + (padding * 0.8));
+      ctx.fillStyle = '#00fff5';
+      ctx.textAlign = 'center';
+      ctx.fillText(text, x, y);
+      ctx.restore();
+    }
+
+    // --- MOUSE EVENT ENGINE WITH NATIVE VIEWPORT MAPPING ---
+    canvas.addEventListener('mousedown', (e) => {
+      const pt = getCanvasMousePt(e);
+      const hitRadius = Math.max(12, (canvas.width / 1280) * 12);
+
+      if (state.calibrationState.active) {
+        if (state.calibrationState.step === 0) {
+          state.calibrationState.p1 = pt;
+          state.calibrationState.step = 1;
+        } else {
+          state.calibrationState.p2 = pt;
+          const distPx = Math.hypot(pt.x - state.calibrationState.p1.x, pt.y - state.calibrationState.p1.y);
+          const realDist = prompt(`Measured Distance: ${distPx.toFixed(1)} pixels.\nEnter known real distance in millimeters:`, "1.0");
+          if (realDist && !isNaN(realDist) && Number(realDist) > 0) {
+            state.scalePxPerMM = distPx / Number(realDist);
+            scaleDisplay.innerText = `${state.scalePxPerMM.toFixed(2)} px/mm`;
+          }
+          state.calibrationState = { active: false, step: 0, p1: null, p2: null };
+        }
+        return;
+      }
+
+      if (state.activeTool === 'select') {
+        if (state.selectedShape) {
+          const handles = getShapeHandles(state.selectedShape);
+          for (let i = 0; i < handles.length; i++) {
+            if (Math.hypot(pt.x - handles[i].x, pt.y - handles[i].y) < hitRadius) {
+              state.dragTarget = { shape: state.selectedShape, type: 'handle', handleIdx: i };
+              return;
+            }
+          }
+        }
+        const hit = state.shapes.slice().reverse().find(s => isPtInShape(pt, s, hitRadius));
+        state.selectedShape = hit || null;
+        if (hit) state.dragTarget = { shape: hit, type: 'body', startPt: pt };
+        return;
+      }
+
+      // Multi-point Creation Tools
+      if (['arc3', 'angle3', 'polyline', 'polygon'].includes(state.activeTool)) {
+        if (!state.creationShape) {
+          state.creationShape = { id: Date.now(), type: state.activeTool, pts: [pt] };
+          if (state.activeTool === 'arc3' || state.activeTool === 'angle3') {
+            state.creationShape.p1 = pt;
+          }
+          state.shapes.push(state.creationShape);
+          state.selectedShape = state.creationShape;
+        } else {
+          if (state.activeTool === 'arc3') {
+            if (!state.creationShape.p2) state.creationShape.p2 = pt;
+            else if (!state.creationShape.p3) { state.creationShape.p3 = pt; state.creationShape = null; }
+          } else if (state.activeTool === 'angle3') {
+            if (!state.creationShape.p2) state.creationShape.p2 = pt;
+            else if (!state.creationShape.p3) { state.creationShape.p3 = pt; state.creationShape = null; }
+          } else {
+            state.creationShape.pts.push(pt);
+          }
+        }
+        return;
+      }
+
+      if (state.activeTool === 'line' || state.activeTool === 'profile') {
+        const newShape = { id: Date.now(), type: state.activeTool, p1: pt, p2: { ...pt } };
+        state.shapes.push(newShape);
+        state.selectedShape = newShape;
+        state.dragTarget = { shape: newShape, type: 'handle', handleIdx: 1 };
+      }
+      else if (state.activeTool === 'circle') {
+        const newShape = { id: Date.now(), type: 'circle', center: pt, r: 20 * (canvas.width / 1280) };
+        state.shapes.push(newShape);
+        state.selectedShape = newShape;
+        state.dragTarget = { shape: newShape, type: 'handle', handleIdx: 0 };
+      }
+      else if (state.activeTool === 'defect') {
+        state.pendingDefectPt = pt;
+        document.getElementById('defectModal').style.display = 'flex';
+      }
+    });
+
+    canvas.addEventListener('mousemove', (e) => {
+      const pt = getCanvasMousePt(e);
+      if (state.calibrationState.active && state.calibrationState.step === 1) state.calibrationState.p2 = pt;
+
+      if (state.dragTarget) {
+        const { shape, type, handleIdx, startPt } = state.dragTarget;
+        if (type === 'handle') updateShapeHandle(shape, handleIdx, pt);
+        else if (type === 'body') {
+          translateShape(shape, pt.x - startPt.x, pt.y - startPt.y);
+          state.dragTarget.startPt = pt;
+        }
+      }
+    });
+
+    canvas.addEventListener('mouseup', () => { state.dragTarget = null; });
+
+    canvas.addEventListener('dblclick', () => {
+      if (['polyline', 'polygon'].includes(state.activeTool)) {
+        state.creationShape = null;
+        state.activeTool = 'select';
+      }
+    });
+
+    function getCanvasMousePt(e) {
+      const rect = canvas.getBoundingClientRect();
+      const scaleX = canvas.width / rect.width;
+      const scaleY = canvas.height / rect.height;
+      return {
+        x: (e.clientX - rect.left) * scaleX,
+        y: (e.clientY - rect.top) * scaleY
+      };
+    }
+
+    function getShapeHandles(shape) {
+      if (shape.type === 'line' || shape.type === 'profile') return [shape.p1, shape.p2];
+      if (shape.type === 'circle') return [{ x: shape.center.x + shape.r, y: shape.center.y }];
+      if (shape.type === 'arc3' || shape.type === 'angle3') return [shape.p1, shape.p2, shape.p3].filter(Boolean);
+      if (shape.type === 'polyline' || shape.type === 'polygon') return shape.pts;
+      if (shape.type === 'defect') return [shape.pt];
+      return [];
+    }
+
+    function updateShapeHandle(shape, idx, pt) {
+      if (shape.type === 'line' || shape.type === 'profile') { if (idx === 0) shape.p1 = pt; else shape.p2 = pt; }
+      else if (shape.type === 'circle') { shape.r = Math.hypot(pt.x - shape.center.x, pt.y - shape.center.y); }
+      else if (shape.type === 'arc3' || shape.type === 'angle3') { if (idx === 0) shape.p1 = pt; else if (idx === 1) shape.p2 = pt; else if (idx === 2) shape.p3 = pt; }
+      else if (shape.type === 'polyline' || shape.type === 'polygon') { shape.pts[idx] = pt; }
+      else if (shape.type === 'defect') { shape.pt = pt; }
+    }
+
+    function translateShape(shape, dx, dy) {
+      if (shape.type === 'line' || shape.type === 'profile') { shape.p1.x += dx; shape.p1.y += dy; shape.p2.x += dx; shape.p2.y += dy; }
+      else if (shape.type === 'circle') { shape.center.x += dx; shape.center.y += dy; }
+      else if (shape.type === 'arc3' || shape.type === 'angle3') { [shape.p1, shape.p2, shape.p3].forEach(p => { if (p) { p.x += dx; p.y += dy; } }); }
+      else if (shape.type === 'polyline' || shape.type === 'polygon') { shape.pts.forEach(p => { p.x += dx; p.y += dy; }); }
+      else if (shape.type === 'defect') { shape.pt.x += dx; shape.pt.y += dy; }
+    }
+
+    function isPtInShape(pt, shape, hitRadius = 12) {
+      if (shape.type === 'line' || shape.type === 'profile') return distToSegment(pt, shape.p1, shape.p2) < hitRadius;
+      if (shape.type === 'circle') return Math.abs(Math.hypot(pt.x - shape.center.x, pt.y - shape.center.y) - shape.r) < hitRadius;
+      if (shape.type === 'arc3' && shape.p1 && shape.p2 && shape.p3) {
+        const circle = fitCircle3Pts(shape.p1, shape.p2, shape.p3);
+        if (circle) return Math.abs(Math.hypot(pt.x - circle.x, pt.y - circle.y) - circle.r) < hitRadius;
+      }
+      if (shape.type === 'angle3') {
+        const pts = [shape.p1, shape.p2, shape.p3].filter(Boolean);
+        if (pts.length >= 2 && distToSegment(pt, pts[0], pts[1]) < hitRadius) return true;
+        if (pts.length >= 3 && distToSegment(pt, pts[1], pts[2]) < hitRadius) return true;
+      }
+      if (shape.type === 'polyline' || shape.type === 'polygon') {
+        for (let i = 0; i < shape.pts.length - 1; i++) {
+          if (distToSegment(pt, shape.pts[i], shape.pts[i+1]) < hitRadius) return true;
+        }
+        if (shape.type === 'polygon' && shape.pts.length > 2) {
+          if (distToSegment(pt, shape.pts[shape.pts.length-1], shape.pts[0]) < hitRadius) return true;
+        }
+      }
+      if (shape.type === 'defect') return Math.hypot(pt.x - shape.pt.x, pt.y - shape.pt.y) < (hitRadius * 1.2);
+      return false;
+    }
+
+    function distToSegment(p, v, w) {
+      const l2 = (v.x - w.x)**2 + (v.y - w.y)**2;
+      if (l2 === 0) return Math.hypot(p.x - v.x, p.y - v.y);
+      let t = Math.max(0, Math.min(1, ((p.x - v.x) * (w.x - v.x) + (p.y - v.y) * (w.y - v.y)) / l2));
+      return Math.hypot(p.x - (v.x + t * (w.x - v.x)), p.y - (v.y + t * (w.y - v.y)));
+    }
+
+    function fitCircle3Pts(p1, p2, p3) {
+      const A = p2.x - p1.x, B = p2.y - p1.y, C = p3.x - p1.x, D = p3.y - p1.y;
+      const E = A * (p1.x + p2.x) + B * (p1.y + p2.y), F = C * (p1.x + p3.x) + D * (p1.y + p3.y);
+      const G = 2 * (A * (p3.y - p2.y) - B * (p3.x - p2.x));
+      if (G === 0) return null;
+      const cx = (D * E - B * F) / G, cy = (A * F - C * E) / G;
+      return { x: cx, y: cy, r: Math.hypot(p1.x - cx, p1.y - cy) };
+    }
+
+    function calcPolygonArea(pts) {
+      let area = 0;
+      for (let i = 0; i < pts.length; i++) {
+        let j = (i + 1) % pts.length;
+        area += pts[i].x * pts[j].y - pts[j].x * pts[i].y;
+      }
+      return Math.abs(area / 2);
+    }
+
+    function getPolygonCentroid(pts) {
+      let cx = 0, cy = 0;
+      pts.forEach(p => { cx += p.x; cy += p.y; });
+      return { x: cx / pts.length, y: cy / pts.length };
+    }
+
+    function updateIntensityProfileGraph(shape) {
+      intensityDrawer.classList.remove('collapsed');
+      intensityCanvas.width = intensityCanvas.clientWidth * (window.devicePixelRatio || 1);
+      intensityCanvas.height = intensityCanvas.clientHeight * (window.devicePixelRatio || 1);
+      intensityCtx.clearRect(0, 0, intensityCanvas.width, intensityCanvas.height);
+
+      const imgData = ctx.getImageData(0, 0, canvas.width, canvas.height).data;
+      const length = Math.hypot(shape.p2.x - shape.p1.x, shape.p2.y - shape.p1.y);
+
+      intensityCtx.strokeStyle = '#00fff5';
+      intensityCtx.lineWidth = 2 * (window.devicePixelRatio || 1);
+      intensityCtx.beginPath();
+      for (let i = 0; i < length; i++) {
+        const t = i / length;
+        const x = Math.round(shape.p1.x + t * (shape.p2.x - shape.p1.x));
+        const y = Math.round(shape.p1.y + t * (shape.p2.y - shape.p1.y));
+        const idx = (y * canvas.width + x) * 4;
+        const luminance = 0.299 * imgData[idx] + 0.587 * imgData[idx+1] + 0.114 * imgData[idx+2];
+        const gx = (i / length) * intensityCanvas.width;
+        const gy = intensityCanvas.height - (luminance / 255) * intensityCanvas.height;
+        if (i === 0) intensityCtx.moveTo(gx, gy); else intensityCtx.lineTo(gx, gy);
+      }
+      intensityCtx.stroke();
+    }
+
+    function applySpatialFilter() {
+      const imgData = ctx.getImageData(0, 0, canvas.width, canvas.height);
+      const data = imgData.data, w = canvas.width, h = canvas.height;
+      const copy = new Uint8ClampedArray(data);
+
+      if (state.filter === 'sobel') {
+        for (let y = 1; y < h - 1; y++) {
+          for (let x = 1; x < w - 1; x++) {
+            const idx = (y * w + x) * 4;
+            const gx = -copy[idx - 4 - w*4] + copy[idx + 4 - w*4] - 2*copy[idx - 4] + 2*copy[idx + 4] - copy[idx - 4 + w*4] + copy[idx + 4 + w*4];
+            const gy = -copy[idx - w*4] - 2*copy[idx - w*4] - copy[idx + 4 - w*4] + copy[idx - 4 + w*4] + 2*copy[idx + w*4] + copy[idx + 4 + w*4];
+            const val = Math.min(255, Math.hypot(gx, gy));
+            data[idx] = data[idx+1] = data[idx+2] = val;
+          }
+        }
+        ctx.putImageData(imgData, 0, 0);
+      } else if (state.filter === 'prewitt') {
+        for (let y = 1; y < h - 1; y++) {
+          for (let x = 1; x < w - 1; x++) {
+            const idx = (y * w + x) * 4;
+            const gx = -copy[idx - 4 - w*4] + copy[idx + 4 - w*4] - copy[idx - 4] + copy[idx + 4] - copy[idx - 4 + w*4] + copy[idx + 4 + w*4];
+            const gy = -copy[idx - w*4] - copy[idx - w*4] - copy[idx + 4 - w*4] + copy[idx - 4 + w*4] + copy[idx + w*4] + copy[idx + 4 + w*4];
+            const val = Math.min(255, Math.hypot(gx, gy));
+            data[idx] = data[idx+1] = data[idx+2] = val;
+          }
+        }
+        ctx.putImageData(imgData, 0, 0);
+      } else if (state.filter === 'laplacian') {
+        for (let y = 1; y < h - 1; y++) {
+          for (let x = 1; x < w - 1; x++) {
+            const idx = (y * w + x) * 4;
+            const val = Math.min(255, Math.abs(
+              -4 * copy[idx] + copy[idx - 4] + copy[idx + 4] + copy[idx - w*4] + copy[idx + w*4]
+            ));
+            data[idx] = data[idx+1] = data[idx+2] = val;
+          }
+        }
+        ctx.putImageData(imgData, 0, 0);
+      } else if (state.filter === 'sharpen') {
+        for (let y = 1; y < h - 1; y++) {
+          for (let x = 1; x < w - 1; x++) {
+            const idx = (y * w + x) * 4;
+            for (let c = 0; c < 3; c++) {
+              const val = 5 * copy[idx + c] - copy[idx - 4 + c] - copy[idx + 4 + c] - copy[idx - w*4 + c] - copy[idx + w*4 + c];
+              data[idx + c] = Math.max(0, Math.min(255, val));
+            }
+          }
+        }
+        ctx.putImageData(imgData, 0, 0);
+      }
+    }
+
+    function drawCrosshair() {
+      ctx.strokeStyle = 'rgba(255, 0, 0, 0.6)';
+      ctx.lineWidth = Math.max(1, canvas.width / 1280);
+      ctx.beginPath();
+      ctx.moveTo(canvas.width/2, 0); ctx.lineTo(canvas.width/2, canvas.height);
+      ctx.moveTo(0, canvas.height/2); ctx.lineTo(canvas.width, canvas.height/2);
+      ctx.stroke();
+    }
+
+    function drawCalibratedGrid() {
+      const pxStep = 1.0 * state.scalePxPerMM;
+      ctx.strokeStyle = 'rgba(0, 255, 245, 0.15)';
+      ctx.lineWidth = Math.max(1, canvas.width / 1280);
+      ctx.beginPath();
+      for (let x = 0; x < canvas.width; x += pxStep) { ctx.moveTo(x, 0); ctx.lineTo(x, canvas.height); }
+      for (let y = 0; y < canvas.height; y += pxStep) { ctx.moveTo(0, y); ctx.lineTo(canvas.width, y); }
+      ctx.stroke();
+    }
+
+    function drawScaleBarLegend() {
+      const baseScale = Math.max(1, canvas.width / 1280);
+      const barPx = 1.0 * state.scalePxPerMM;
+      const x = canvas.width - barPx - (25 * baseScale), y = canvas.height - (25 * baseScale);
+      ctx.strokeStyle = '#ffffff';
+      ctx.lineWidth = 3 * baseScale;
+      ctx.beginPath();
+      ctx.moveTo(x, y); ctx.lineTo(x + barPx, y);
+      ctx.stroke();
+      ctx.fillStyle = '#ffffff';
+      ctx.font = `${Math.round(12 * baseScale)}px system-ui`;
+      ctx.textAlign = 'center';
+      ctx.fillText(formatDistance(barPx), x + barPx/2, y - (8 * baseScale));
+    }
+
+    initCameraDevices();
+    btnStartCam.addEventListener('click', startCamera);
+
+    btnPause.addEventListener('click', () => {
+      state.isPaused = !state.isPaused;
+      btnPause.innerText = state.isPaused ? 'Resume Feed' : 'Freeze Frame';
+      bannerPaused.style.display = state.isPaused ? 'block' : 'none';
+    });
+
+    document.querySelectorAll('.tool-btn').forEach(btn => {
+      btn.addEventListener('click', () => {
+        document.querySelectorAll('.tool-btn').forEach(b => b.classList.remove('active'));
+        btn.classList.add('active');
+        state.activeTool = btn.dataset.tool;
+        state.creationShape = null;
+      });
+    });
+
+    document.getElementById('btnCalibrate').addEventListener('click', () => {
+      state.calibrationState = { active: true, step: 0, p1: null, p2: null };
+      alert('Click Point A, then click Point B on your calibration target scale.');
+    });
+
+    document.getElementById('btnDeleteSelected').addEventListener('click', () => {
+      if (state.selectedShape) {
+        state.shapes = state.shapes.filter(s => s !== state.selectedShape);
+        state.selectedShape = null;
+      }
+    });
+
+    document.getElementById('btnSnap').addEventListener('click', () => {
+      const dataUrl = canvas.toDataURL('image/png');
+      const img = document.createElement('img');
+      img.src = dataUrl;
+      const container = document.createElement('div');
+      container.className = 'gallery-item';
+      container.appendChild(img);
+      container.addEventListener('click', () => {
+        const a = document.createElement('a');
+        a.href = dataUrl;
+        a.download = `snapshot_${Date.now()}.png`;
+        a.click();
+      });
+      document.getElementById('galleryDrawer').appendChild(container);
+    });
+
+    document.getElementById('btnSaveDefect').addEventListener('click', () => {
+      if (state.pendingDefectPt) {
+        const shape = {
+          id: Date.now(),
+          type: 'defect',
+          pt: state.pendingDefectPt,
+          category: document.getElementById('defectCat').value,
+          severity: document.getElementById('defectSeverity').value,
+          note: document.getElementById('defectNote').value
+        };
+        state.shapes.push(shape);
+        state.pendingDefectPt = null;
+      }
+      document.getElementById('defectModal').style.display = 'none';
+    });
+
+    document.getElementById('btnCancelDefect').addEventListener('click', () => {
+      document.getElementById('defectModal').style.display = 'none';
+    });
+
+    document.getElementById('intensityHeader').addEventListener('click', () => {
+      intensityDrawer.classList.toggle('collapsed');
+      const icon = document.getElementById('drawerToggleIcon');
+      icon.innerText = intensityDrawer.classList.contains('collapsed') ? '▲ Click to Expand' : '▼ Click to Collapse';
+    });
+
+    filterSelect.addEventListener('change', (e) => state.filter = e.target.value);
+    rngBrightness.addEventListener('input', (e) => state.brightness = e.target.value);
+    rngContrast.addEventListener('input', (e) => state.contrast = e.target.value);
+    unitSelect.addEventListener('change', (e) => state.unit = e.target.value);
+
+    document.getElementById('btnExportCSV').addEventListener('click', () => {
+      let csv = 'ID,Type,Category/Note,Pixel_Value,Real_Value,Units\n';
+      state.shapes.forEach((s, idx) => {
+        if (s.type === 'line') {
+          const d = Math.hypot(s.p2.x - s.p1.x, s.p2.y - s.p1.y);
+          csv += `${idx+1},Line,-,${d.toFixed(1)},${formatDistance(d)},${state.unit}\n`;
+        } else if (s.type === 'circle') {
+          csv += `${idx+1},Circle Radius,-,${s.r.toFixed(1)},${formatDistance(s.r)},${state.unit}\n`;
+          csv += `${idx+1},Circle Diameter,-,${(2*s.r).toFixed(1)},${formatDistance(2*s.r)},${state.unit}\n`;
+        } else if (s.type === 'polyline') {
+          let tot = 0;
+          for (let i = 1; i < s.pts.length; i++) tot += Math.hypot(s.pts[i].x - s.pts[i-1].x, s.pts[i].y - s.pts[i-1].y);
+          csv += `${idx+1},Polyline,-,${tot.toFixed(1)},${formatDistance(tot)},${state.unit}\n`;
+        } else if (s.type === 'polygon') {
+          const a = calcPolygonArea(s.pts);
+          csv += `${idx+1},Polygon,-,${a.toFixed(1)},${formatArea(a)},${state.unit}²\n`;
+        } else if (s.type === 'defect') {
+          csv += `${idx+1},Defect,${s.category} (${s.severity}): ${s.note},-,-\n`;
+        }
+      });
+      const blob = new Blob([csv], { type: 'text/csv' });
+      const a = document.createElement('a');
+      a.href = URL.createObjectURL(blob);
+      a.download = `inspection_report_${Date.now()}.csv`;
+      a.click();
+    });
+  </script>
+</body>
+</html>
