@@ -1,0 +1,105 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" width="100%" height="100%">
+  <defs>
+    <!-- Background Gradient -->
+    <radialGradient id="bgGrad" cx="50%" cy="50%" r="60%">
+      <stop offset="0%" stop-color="#1e293b"/>
+      <stop offset="100%" stop-color="#090d16"/>
+    </radialGradient>
+
+    <!-- Laser Beam Glow -->
+    <linearGradient id="beamGrad" x1="50%" y1="0%" x2="50%" y2="100%">
+      <stop offset="0%" stop-color="#38bdf8" stop-opacity="0.9"/>
+      <stop offset="45%" stop-color="#818cf8" stop-opacity="0.95"/>
+      <stop offset="70%" stop-color="#c084fc" stop-opacity="1"/>
+      <stop offset="100%" stop-color="#f43f5e" stop-opacity="1"/>
+    </linearGradient>
+
+    <radialGradient id="focalGlow" cx="50%" cy="50%" r="50%">
+      <stop offset="0%" stop-color="#ffffff"/>
+      <stop offset="30%" stop-color="#f43f5e" stop-opacity="0.9"/>
+      <stop offset="70%" stop-color="#8b5cf6" stop-opacity="0.4"/>
+      <stop offset="100%" stop-color="#8b5cf6" stop-opacity="0"/>
+    </radialGradient>
+
+    <linearGradient id="nozzleGrad" x1="0%" y1="0%" x2="100%" y2="0%">
+      <stop offset="0%" stop-color="#475569"/>
+      <stop offset="30%" stop-color="#94a3b8"/>
+      <stop offset="50%" stop-color="#cbd5e1"/>
+      <stop offset="70%" stop-color="#64748b"/>
+      <stop offset="100%" stop-color="#334155"/>
+    </linearGradient>
+
+    <linearGradient id="partGrad" x1="0%" y1="0%" x2="0%" y2="100%">
+      <stop offset="0%" stop-color="#334155"/>
+      <stop offset="100%" stop-color="#1e293b"/>
+    </linearGradient>
+
+    <filter id="laserGlow" x="-50%" y="-50%" width="200%" height="200%">
+      <feGaussianBlur in="SourceGraphic" stdDeviation="6" result="blur1"/>
+      <feGaussianBlur in="SourceGraphic" stdDeviation="15" result="blur2"/>
+      <feMerge>
+        <feMergeNode in="blur2"/>
+        <feMergeNode in="blur1"/>
+        <feMergeNode in="SourceGraphic"/>
+      </feMerge>
+    </filter>
+  </defs>
+
+  <!-- App Rounded Icon Container -->
+  <rect width="512" height="512" rx="112" fill="url(#bgGrad)"/>
+  <rect width="508" height="508" x="2" y="2" rx="110" fill="none" stroke="#334155" stroke-width="3" stroke-opacity="0.6"/>
+
+  <!-- Precision Measurement Grid / Reticle Background -->
+  <circle cx="256" cy="256" r="180" fill="none" stroke="#334155" stroke-width="1.5" stroke-dasharray="4,6" opacity="0.4"/>
+  <circle cx="256" cy="256" r="110" fill="none" stroke="#38bdf8" stroke-width="1.5" stroke-dasharray="2,4" opacity="0.25"/>
+  <line x1="256" y1="56" x2="256" y2="456" stroke="#475569" stroke-width="1.5" stroke-dasharray="6,6" opacity="0.4"/>
+  <line x1="56" y1="256" x2="456" y2="256" stroke="#475569" stroke-width="1.5" stroke-dasharray="6,6" opacity="0.4"/>
+
+  <!-- Microscope Stage & Specimen -->
+  <path d="M 74,368 L 438,368 L 438,426 L 74,426 Z" fill="url(#partGrad)" stroke="#475569" stroke-width="2"/>
+  <!-- Specimen feature on stage -->
+  <rect x="192" y="344" width="128" height="24" rx="4" fill="#1e293b" stroke="#64748b" stroke-width="2"/>
+  <line x1="62" y1="368" x2="450" y2="368" stroke="#64748b" stroke-width="1.5" stroke-dasharray="4,4"/>
+
+  <!-- Optical Illumination Cone -->
+  <g filter="url(#laserGlow)">
+    <polygon points="234,154 278,154 334,344 178,344" fill="url(#beamGrad)" opacity="0.42"/>
+  </g>
+  <line x1="234" y1="154" x2="178" y2="344" stroke="#38bdf8" stroke-width="1.5" stroke-dasharray="4,4" opacity="0.65"/>
+  <line x1="278" y1="154" x2="334" y2="344" stroke="#38bdf8" stroke-width="1.5" stroke-dasharray="4,4" opacity="0.65"/>
+
+  <!-- Circular Field-of-View Ring & Metrology Reticle -->
+  <circle cx="256" cy="284" r="98" fill="#06b6d4" fill-opacity="0.06" stroke="#06b6d4" stroke-width="2.5"/>
+  <circle cx="256" cy="284" r="82" fill="none" stroke="#38bdf8" stroke-width="1.2" stroke-dasharray="4,5" opacity="0.5"/>
+  <line x1="164" y1="284" x2="348" y2="284" stroke="#ffffff" stroke-width="1.2" opacity="0.65"/>
+  <line x1="256" y1="192" x2="256" y2="376" stroke="#ffffff" stroke-width="1.2" opacity="0.65"/>
+  <!-- White tick scale marks along horizontal reticle -->
+  <g stroke="#ffffff" stroke-width="1.5" opacity="0.85">
+    <line x1="196" y1="278" x2="196" y2="290"/>
+    <line x1="216" y1="280" x2="216" y2="288"/>
+    <line x1="236" y1="278" x2="236" y2="290"/>
+    <line x1="276" y1="278" x2="276" y2="290"/>
+    <line x1="296" y1="280" x2="296" y2="288"/>
+    <line x1="316" y1="278" x2="316" y2="290"/>
+  </g>
+
+  <!-- Amber Caliper Dimension Line with Arrowheads & Witness Ticks -->
+  <g stroke="#f59e0b" stroke-width="2.5" stroke-linecap="round">
+    <line x1="192" y1="312" x2="192" y2="342" stroke-dasharray="3,3" opacity="0.85"/>
+    <line x1="320" y1="312" x2="320" y2="342" stroke-dasharray="3,3" opacity="0.85"/>
+    <line x1="196" y1="320" x2="316" y2="320"/>
+  </g>
+  <polygon points="192,320 205,314 205,326" fill="#f59e0b"/>
+  <polygon points="320,320 307,314 307,326" fill="#f59e0b"/>
+
+  <!-- Focal Glow on Specimen -->
+  <circle cx="256" cy="344" r="28" fill="url(#focalGlow)"/>
+  <circle cx="256" cy="344" r="6" fill="#ffffff"/>
+
+  <!-- Microscope Objective Barrel -->
+  <rect x="186" y="48" width="140" height="32" rx="4" fill="url(#nozzleGrad)" stroke="#64748b" stroke-width="2.5"/>
+  <rect x="196" y="80" width="120" height="22" fill="url(#nozzleGrad)" stroke="#64748b" stroke-width="2"/>
+  <path d="M 196,102 L 316,102 L 284,154 L 228,154 Z" fill="url(#nozzleGrad)" stroke="#64748b" stroke-width="2.5"/>
+  <ellipse cx="256" cy="154" rx="28" ry="8" fill="#0f172a" stroke="#38bdf8" stroke-width="2"/>
+  <line x1="256" y1="48" x2="256" y2="152" stroke="#ffffff" stroke-width="1" opacity="0.4"/>
+</svg>

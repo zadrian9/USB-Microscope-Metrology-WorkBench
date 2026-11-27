@@ -46,6 +46,10 @@ A browser-based metrology and visual inspection workbench for connecting to a US
 2. Serve `index.html` over `https://` (such as GitHub Pages) or a local server (e.g., `python -m http.server`), or open `index.html` directly in a browser that allows camera access on `file://`.
 3. Grant camera permission when prompted by the browser.
 
+### Install / Offline (PWA)
+
+When opened over `https://` (such as GitHub Pages) or `http://localhost`, you can install the app from your browser's address bar / menu; it caches all shell assets on first load and continues working offline.
+
 ## Usage
 
 1. **Connect Camera**: Select your USB microscope from the camera dropdown, choose a target resolution, and click **Start Feed**.
