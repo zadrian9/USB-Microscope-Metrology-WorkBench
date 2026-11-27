@@ -63,4 +63,4 @@ When opened over `https://` (such as GitHub Pages) or `http://localhost`, you ca
 
 ## License
 
-This project is licensed under the [Mozilla Public License 2.0](LICENSE).
+This project is licensed under the [GNU Affero General Public License v3.0 (AGPL-3.0)](LICENSE).
